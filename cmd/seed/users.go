@@ -7,18 +7,20 @@ import (
 )
 
 type user struct {
-	Name        string
-	Email       string
-	Password    string
-	Activated   bool
+	Name      string
+	Email     string
+	Password  string
+	Activated bool
+	Role      string
 }
 
 func (app *application) seedUsers() {
 	admin := user{
-		Name:        "Admin User",
-		Email:       "admin@improved-fiesta.go",
-		Password:    "admin123",
-		Activated:   true,
+		Name:      "Admin User",
+		Email:     "admin@improved-fiesta.go",
+		Password:  "admin123",
+		Activated: true,
+		Role:      data.AdminRole,
 	}
 
 	app.logger.Info("seeding admin user...")
@@ -26,10 +28,11 @@ func (app *application) seedUsers() {
 	app.logger.Info("done seeding admin user")
 
 	activatedUser := user{
-		Name:        "Activated User",
-		Email:       "activated@improved-fiesta.go",
-		Password:    "activated123",
-		Activated:   true,
+		Name:      "Activated User",
+		Email:     "activated@improved-fiesta.go",
+		Password:  "activated123",
+		Activated: true,
+		Role:      data.UserRole,
 	}
 
 	app.logger.Info("seeding activated user...")
@@ -37,10 +40,11 @@ func (app *application) seedUsers() {
 	app.logger.Info("done seeding activated user")
 
 	unactivatedUser := user{
-		Name:        "Unactivated User",
-		Email:       "unactivated@improved-fiesta.go",
-		Password:    "unactivated123",
-		Activated:   false,
+		Name:      "Unactivated User",
+		Email:     "unactivated@improved-fiesta.go",
+		Password:  "unactivated123",
+		Activated: false,
+		Role:      data.UserRole,
 	}
 
 	app.logger.Info("seeding unactivated user...")
@@ -52,7 +56,8 @@ func (app *application) seedUser(user *user) {
 	domainUser := &data.User{
 		Name:      user.Name,
 		Email:     user.Email,
-		Activated: true,
+		Activated: user.Activated,
+		Role:      user.Role,
 	}
 
 	err := domainUser.Password.Set(user.Password)

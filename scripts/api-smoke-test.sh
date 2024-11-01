@@ -11,4 +11,4 @@ if [ -z "$token" ]; then
 	exit 1
 fi
 
-curl -H "Authorization: Bearer $token" "$API_URL/healthcheck"
+curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"role\": \"user\"}" "$API_URL/users/1/role"

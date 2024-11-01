@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
 	name TEXT NOT NULL,
 	email TEXT UNIQUE NOT NULL,
 	password_hash BLOB NOT NULL,
-	activated BOOLEAN NOT NULL,
+	activated BOOLEAN NOT NULL DEFAULT false,
+	role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
 	version INTEGER NOT NULL DEFAULT 1
 );
 

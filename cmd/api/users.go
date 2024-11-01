@@ -190,9 +190,75 @@ func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	env := envelope{"message": "your password was successfully reset"}
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
 
-	err = app.writeJSON(w, http.StatusOK, env, nil)
+func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	var input struct {
+		Role string `json:"role"`
+	}
+
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	user, err := app.models.Users.GetByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	v := validator.New()
+	data.ValidateRole(v, input.Role)
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	if user.Role == data.AdminRole && input.Role == data.UserRole {
+		count, err := app.models.Users.CountAdminUsers()
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		if count <= 1 {
+			app.errorResponse(w, r, http.StatusBadRequest, "cannot remove the last admin user")
+			return
+		}
+	}
+
+	user.Role = input.Role
+
+	err = app.models.Users.Update(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

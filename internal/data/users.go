@@ -14,6 +14,11 @@ import (
 
 var ErrDuplicateEmail = errors.New("duplicate email")
 
+const (
+	UserRole  = "user"
+	AdminRole = "admin"
+)
+
 var AnonymousUser = &User{}
 
 type User struct {
@@ -24,12 +29,17 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
 	Activated bool      `json:"activated"`
+	Role      string    `json:"role"`
 	Version   int       `json:"-"`
 }
 
 type password struct {
 	plaintext *string
 	hash      []byte
+}
+
+func (u *User) IsAdmin() bool {
+	return u.Role == AdminRole
 }
 
 func (u *User) IsAnonymous() bool {
@@ -62,6 +72,11 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 	return true, nil
 }
 
+func ValidateRole(v *validator.Validator, role string) {
+	v.Check(role != "", "role", "must be provided")
+	v.Check(role == UserRole || role == AdminRole, "role", "must be either 'user' or 'admin'")
+}
+
 func ValidateEmail(v *validator.Validator, email string) {
 	v.Check(email != "", "email", "must be provided")
 	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
@@ -78,6 +93,7 @@ func ValidateUser(v *validator.Validator, user *User) {
 	v.Check(len(user.Name) <= 500, "name", "must not be more than 500 bytes long")
 
 	ValidateEmail(v, user.Email)
+	ValidateRole(v, user.Role)
 
 	if user.Password.plaintext != nil {
 		ValidatePasswordPlaintext(v, *user.Password.plaintext)
@@ -93,14 +109,18 @@ type UserModel struct {
 }
 
 func (m UserModel) Insert(user *User) error {
+	if user.Role == "" {
+		user.Role = UserRole
+	}
+
 	user.Email = strings.ToLower(user.Email)
 
 	query := `
-		INSERT INTO users (name, email, password_hash, activated)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO users (name, email, password_hash, activated, role)
+		VALUES (?, ?, ?, ?, ?)
 	`
 
-	args := []any{user.Name, user.Email, user.Password.hash, user.Activated}
+	args := []any{user.Name, user.Email, user.Password.hash, user.Activated, user.Role}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -118,7 +138,7 @@ func (m UserModel) Insert(user *User) error {
 		return err
 	}
 
-	fetchedUser, err := m.GetById(id)
+	fetchedUser, err := m.GetByID(id)
 	if err != nil {
 		return err
 	}
@@ -131,9 +151,9 @@ func (m UserModel) Insert(user *User) error {
 	return nil
 }
 
-func (m UserModel) GetById(id int64) (*User, error) {
+func (m UserModel) GetByID(id int64) (*User, error) {
 	query := `
-		SELECT id, created_at, updated_at, name, email, password_hash, activated, version
+		SELECT id, created_at, updated_at, name, email, password_hash, activated, role, version
 		FROM users
 		WHERE id = ?
 	`
@@ -151,6 +171,7 @@ func (m UserModel) GetById(id int64) (*User, error) {
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
+		&user.Role,
 		&user.Version,
 	)
 	if err != nil {
@@ -169,7 +190,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	email = strings.ToLower(email)
 
 	query := `
-		SELECT id, created_at, updated_at, name, email, password_hash, activated, version
+		SELECT id, created_at, updated_at, name, email, password_hash, activated, role, version
 		FROM users
 		WHERE email = ?
 	`
@@ -187,6 +208,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
+		&user.Role,
 		&user.Version,
 	)
 	if err != nil {
@@ -206,7 +228,7 @@ func (m UserModel) Update(user *User) error {
 
 	query := `
 		UPDATE users
-		SET name = ?, email = ?, password_hash = ?, activated = ?, version = version + 1
+		SET name = ?, email = ?, password_hash = ?, activated = ?, role = ?, version = version + 1
 		WHERE id = ? AND version = ?
 	`
 
@@ -215,6 +237,7 @@ func (m UserModel) Update(user *User) error {
 		user.Email,
 		user.Password.hash,
 		user.Activated,
+		user.Role,
 		user.ID,
 		user.Version,
 	}
@@ -243,11 +266,30 @@ func (m UserModel) Update(user *User) error {
 	return nil
 }
 
+func (m UserModel) CountAdminUsers() (int, error) {
+	query := `
+        SELECT COUNT(*) 
+        FROM users 
+        WHERE role = ?
+    `
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var count int
+	err := m.DB.QueryRowContext(ctx, query, AdminRole).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
 	query := `
-		SELECT users.id, users.created_at, users.updated_at, users.name, users.email, users.password_hash, users.activated, users.version
+		SELECT users.id, users.created_at, users.updated_at, users.name, users.email, users.password_hash, users.activated, users.role, users.version
 		FROM users
 		INNER JOIN tokens
 		ON users.id = tokens.user_id
@@ -271,6 +313,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
+		&user.Role,
 		&user.Version,
 	)
 	if err != nil {

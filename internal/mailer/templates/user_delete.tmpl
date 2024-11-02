@@ -1,0 +1,32 @@
+{{define "subject"}}Account Deleted - Improved Fiesta{{end}}
+
+{{define "plainBody"}}
+Hi,
+
+We're confirming that the Improved Fiesta account associated with {{.Email}} has been successfully deleted.
+
+For your records, the deleted account ID was {{.userID}}.
+
+If you didn't request this deletion, please contact our support team immediately.
+
+Thanks,
+The Improved Fiesta Team
+{{end}}
+
+{{define "htmlBody"}}
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+    <p>Hi,</p>
+    <p>We're confirming that the Improved Fiesta account associated with <strong>{{.Email}}</strong> has been successfully deleted.</p>
+    <p>For your records, the deleted account ID was <strong>{{.userID}}</strong>.</p>
+    <p>If you didn't request this deletion, please contact our support team immediately.</p>
+    <p>Thanks,</p>
+    <p>The Improved Fiesta Team</p>
+</body>
+</html>
+{{end}}

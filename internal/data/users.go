@@ -325,3 +325,34 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 
 	return &user, nil
 }
+
+func (m UserModel) Delete(id int64) error {
+    user, err := m.GetByID(id)
+    if err != nil {
+        return err
+    }
+
+    query := `
+        DELETE FROM users
+        WHERE id = ? AND version = ?
+    `
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    result, err := m.DB.ExecContext(ctx, query, id, user.Version)
+    if err != nil {
+        return err
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return err
+    }
+
+    if rowsAffected == 0 {
+        return ErrEditConflict
+    }
+
+    return nil
+}

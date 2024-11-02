@@ -82,6 +82,6 @@ func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.R
 }
 
 func (app *application) unauthorizedResponse(w http.ResponseWriter, r *http.Request) {
-	message := "your user account doesn't have the necessary role to access this resource"
+	message := "your user account is not authorized to access this resource"
 	app.errorResponse(w, r, http.StatusUnauthorized, message)
 }

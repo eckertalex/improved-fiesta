@@ -203,16 +203,6 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var input struct {
-		Role string `json:"role"`
-	}
-
-	err = app.readJSON(w, r, &input)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
-
 	user, err := app.models.Users.GetByID(id)
 	if err != nil {
 		switch {
@@ -221,6 +211,16 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
+		return
+	}
+
+	var input struct {
+		Role string `json:"role"`
+	}
+
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
@@ -262,4 +262,63 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+func (app *application) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+    id, err := app.readIDParam(r)
+    if err != nil {
+        app.notFoundResponse(w, r)
+        return
+    }
+
+	user, err := app.models.Users.GetByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	if user.Role == data.AdminRole {
+		count, err := app.models.Users.CountAdminUsers()
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		if count <= 1 {
+			app.errorResponse(w, r, http.StatusBadRequest, "cannot remove the last admin user")
+			return
+		}
+	}
+
+	err = app.models.Users.Delete(id)
+    if err != nil {
+        switch {
+        case errors.Is(err, data.ErrRecordNotFound):
+            app.notFoundResponse(w, r)
+        case errors.Is(err, data.ErrEditConflict):
+            app.editConflictResponse(w, r)
+        default:
+            app.serverErrorResponse(w, r, err)
+        }
+        return
+    }
+
+	app.background(func() {
+		data := map[string]any{
+			"email":  user.Email,
+			"userID": user.ID,
+		}
+
+		err = app.mailer.Send(user.Email, "user_delete.tmpl", data)
+		if err != nil {
+			app.logger.Error(err.Error())
+		}
+	})
+
+	w.WriteHeader(http.StatusNoContent)
 }

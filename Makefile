@@ -66,6 +66,7 @@ run/api: build/api
 		-env=${IMPROVED_FIESTA_ENV} \
 		-db-dsn=${IMPROVED_FIESTA_DB_DSN} \
 		-smtp-host=${IMPROVED_FIESTA_SMTP_HOST} \
+		-smtp-port=${IMPROVED_FIESTA_SMTP_PORT} \
 		-smtp-username=${IMPROVED_FIESTA_SMTP_USERNAME} \
 		-smtp-password=${IMPROVED_FIESTA_SMTP_PASSWORD} \
 		-smtp-sender=${IMPROVED_FIESTA_SMTP_SENDER}
@@ -80,6 +81,7 @@ watch/api:
 			-env=${IMPROVED_FIESTA_ENV} \
 			-db-dsn=${IMPROVED_FIESTA_DB_DSN} \
 			-smtp-host=${IMPROVED_FIESTA_SMTP_HOST} \
+			-smtp-port=${IMPROVED_FIESTA_SMTP_PORT} \
 			-smtp-username=${IMPROVED_FIESTA_SMTP_USERNAME} \
 			-smtp-password=${IMPROVED_FIESTA_SMTP_PASSWORD} \
 			-smtp-sender=${IMPROVED_FIESTA_SMTP_SENDER}"

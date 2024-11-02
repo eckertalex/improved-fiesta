@@ -26,6 +26,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Name:      input.Name,
 		Email:     input.Email,
 		Activated: false,
+		Role:      data.UserRole,
 	}
 
 	err = user.Password.Set(input.Password)
@@ -72,7 +73,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		}
 	})
 
-	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"data": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -96,7 +97,7 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -165,7 +166,7 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -224,7 +225,7 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 		}
 		return
 	}
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -338,7 +339,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -401,7 +402,7 @@ func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

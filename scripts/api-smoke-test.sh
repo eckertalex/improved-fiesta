@@ -12,4 +12,23 @@ if [ -z "$token" ]; then
 fi
 
 curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"role\": \"user\"}" "$API_URL/users/1/role"
+
+sleep 1
+
 curl -s -H "Authorization: Bearer $token" -X DELETE "$API_URL/users/1"
+
+sleep 1
+
+curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"name\": \"ADMIN\"}" "$API_URL/users/1"
+
+sleep 1
+
+curl -s -H "Authorization: Bearer $token" "$API_URL/users/1"
+
+sleep 1
+
+curl -s -H "Authorization: Bearer $token" "$API_URL/users/2"
+
+# sleep 1
+#
+# curl -s -H "Authorization: Bearer $token" "$API_URL/users"

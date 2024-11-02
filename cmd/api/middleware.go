@@ -173,7 +173,7 @@ func (app *application) requireOwnershipOrAdmin(next http.HandlerFunc) http.Hand
 		user := app.contextGetUser(r)
 
 		id, err := app.readIDParam(r)
-		if err !=  nil {
+		if err != nil {
 			app.badRequestResponse(w, r, err)
 			return
 		}

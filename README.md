@@ -129,6 +129,69 @@ curl http://localhost:45067/v1/healthcheck
 }
 ```
 
+#### GET /v1/users
+
+**Permission:** Public  
+**Description:** List users
+
+**Query Parameters:**
+
+- `username` (string): Username
+- `email` (string): User's email address
+- `page` (number): Page
+- `page_size` (number): Page size
+- `sort` (number): Sort order (must be 'id', 'username', 'email', 'role', '-id', '-username', '-email', '-role')
+
+**Request Headers:**
+
+- `Authorization`: Bearer token
+
+**Example Request:**
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+     http://localhost:45067/v1/users?email=example&page=2&page_size=10&sort=-username
+```
+
+**Response Body:**
+
+- `data` (array): User details
+- `metadata` (object): Metadata details
+
+**Example Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": 123,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T11:45:00Z",
+      "username": "alice",
+      "email": "alice.johnson@example.com",
+      "activated": true,
+      "role": "user"
+    }
+    {
+      "id": 124,
+      "created_at": "2024-01-15T14:00:00Z",
+      "updated_at": "2024-01-15T14:00:00Z",
+      "username": "bob",
+      "email": "bob.smith@example.com",
+      "activated": false,
+      "role": "user"
+    },
+  ],
+  "metadata": {
+    "current_page": 1,
+    "page_size": 20,
+    "first_page": 1,
+    "last_page": 1,
+    "total_records": 2
+  }
+}
+```
+
 #### POST /v1/users
 
 **Permission:** Public  
@@ -435,6 +498,25 @@ curl -X POST \
 }
 ```
 
+#### DELETE /v1/tokens/session
+
+**Permission:** Authenticated  
+**Description:** Delete auth token
+
+**Request Headers:**
+
+- `Authorization`: Bearer token
+
+**Example Request:**
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+     -X DELETE \
+     http://localhost:45067/v1/tokens/session
+```
+
+**Response:** 204 No Content
+
 #### POST /v1/tokens/activation
 
 **Permission:** Public  
@@ -585,5 +667,4 @@ CREATE TABLE IF NOT EXISTS tokens (
 
 ## Todo
 
-- [ ] Add GET /v1/users endpoint
 - [ ] Write End-to-End tests

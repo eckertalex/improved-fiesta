@@ -9,6 +9,45 @@ import (
 	"github.com/eckertalex/improved-fiesta/internal/validator"
 )
 
+func (app *application) listUserHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Username string
+		Email    string
+		data.Filters
+	}
+
+	v := validator.New()
+
+	qs := r.URL.Query()
+
+	input.Username = app.readStrings(qs, "username", "")
+	input.Email = app.readStrings(qs, "email", "")
+
+	input.Page = app.readInt(qs, "page", 1, v)
+	input.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	input.Sort = app.readStrings(qs, "sort", "id")
+	input.SortSafelist = []string{"id", "username", "email", "role", "-id", "-username", "-email", "-role"}
+
+	data.ValidateFilters(v, input.Filters)
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	users, metadata, err := app.models.Users.GetAll(input.Username, input.Email, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": users, "metadata": metadata}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Username string `json:"username"`

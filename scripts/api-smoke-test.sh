@@ -15,15 +15,21 @@ curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"role\": \"user\"}" "$A
 
 curl -s -H "Authorization: Bearer $token" -X DELETE "$API_URL/users/1"
 
-curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"username\": \"ADMIN\"}" "$API_URL/users/1"
+curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"username\": \"nimda\"}" "$API_URL/users/1"
 
-curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"username\": \"ADMIN\"}" "$API_URL/users/2"
+curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"username\": \"nimda\"}" "$API_URL/users/2"
 
 curl -s -H "Authorization: Bearer $token" -X PATCH -d "{\"email\": \"admin@improved-fiesta.go\"}" "$API_URL/users/2"
 
 curl -s -H "Authorization: Bearer $token" "$API_URL/users/1"
 
 curl -s -H "Authorization: Bearer $token" "$API_URL/users/2"
+
+curl -s -H "Authorization: Bearer $token" "$API_URL/users" | jq | pbcopy
+
+curl -s -H "Authorization: Bearer $token" "$API_URL/users?page=1&page_size=2&sort=-id"
+
+curl -s -H "Authorization: Bearer $token" "$API_URL/users?username=nim"
 
 curl -s -H "Authorization: Bearer $token" "http://localhost:45067/debug/vars" | jq -r ".version"
 

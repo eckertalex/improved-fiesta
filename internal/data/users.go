@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -111,11 +112,70 @@ type UserModel struct {
 	DB *sql.DB
 }
 
+func (m UserModel) GetAll(username string, email string, filter Filters) ([]*User, Metadata, error) {
+	query := fmt.Sprintf(`
+		SELECT count(*) OVER(), id, created_at, updated_at, username, email, password_hash, activated, role, version
+		FROM users
+		WHERE (username LIKE ? OR ? = '')
+		AND (email LIKE ? OR ? = '')
+		ORDER BY %s %s, id ASC
+		LIMIT ? OFFSET ?
+	`, filter.sortColumn(), filter.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	usernamePattern := "%" + username + "%"
+	emailPattern := "%" + email + "%"
+	args := []any{usernamePattern, username, emailPattern, email, filter.limit(), filter.offset()}
+
+	rows, err := m.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, Metadata{}, err
+	}
+
+	defer rows.Close()
+
+	totalRecords := 0
+	users := []*User{}
+
+	for rows.Next() {
+		var user User
+
+		err := rows.Scan(
+			&totalRecords,
+			&user.ID,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+			&user.Username,
+			&user.Email,
+			&user.Password.hash,
+			&user.Activated,
+			&user.Role,
+			&user.Version,
+		)
+		if err != nil {
+			return nil, Metadata{}, err
+		}
+
+		users = append(users, &user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, Metadata{}, err
+	}
+
+	metadata := calculateMetadata(totalRecords, filter.Page, filter.PageSize)
+
+	return users, metadata, nil
+}
+
 func (m UserModel) Insert(user *User) error {
 	if user.Role == "" {
 		user.Role = UserRole
 	}
 
+	user.Username = strings.ToLower(user.Username)
 	user.Email = strings.ToLower(user.Email)
 
 	query := `
@@ -230,6 +290,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 }
 
 func (m UserModel) Update(user *User) error {
+	user.Username = strings.ToLower(user.Username)
 	user.Email = strings.ToLower(user.Email)
 
 	query := `

@@ -12,7 +12,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var ErrDuplicateEmail = errors.New("duplicate email")
+var (
+	ErrDuplicateEmail    = errors.New("duplicate email")
+	ErrDuplicateUsername = errors.New("duplicate username")
+)
 
 const (
 	UserRole  = "user"
@@ -25,7 +28,7 @@ type User struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	Name      string    `json:"name"`
+	Username  string    `json:"username"`
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
 	Activated bool      `json:"activated"`
@@ -89,8 +92,8 @@ func ValidatePasswordPlaintext(v *validator.Validator, password string) {
 }
 
 func ValidateUser(v *validator.Validator, user *User) {
-	v.Check(user.Name != "", "name", "must be provided")
-	v.Check(len(user.Name) <= 500, "name", "must not be more than 500 bytes long")
+	v.Check(user.Username != "", "name", "must be provided")
+	v.Check(len(user.Username) <= 500, "name", "must not be more than 500 bytes long")
 
 	ValidateEmail(v, user.Email)
 	ValidateRole(v, user.Role)
@@ -116,11 +119,11 @@ func (m UserModel) Insert(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 
 	query := `
-		INSERT INTO users (name, email, password_hash, activated, role)
+		INSERT INTO users (username, email, password_hash, activated, role)
 		VALUES (?, ?, ?, ?, ?)
 	`
 
-	args := []any{user.Name, user.Email, user.Password.hash, user.Activated, user.Role}
+	args := []any{user.Username, user.Email, user.Password.hash, user.Activated, user.Role}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -129,6 +132,9 @@ func (m UserModel) Insert(user *User) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
 			return ErrDuplicateEmail
+		}
+		if strings.Contains(err.Error(), "UNIQUE constraint failed: users.username") {
+			return ErrDuplicateUsername
 		}
 		return err
 	}
@@ -153,7 +159,7 @@ func (m UserModel) Insert(user *User) error {
 
 func (m UserModel) GetByID(id int64) (*User, error) {
 	query := `
-		SELECT id, created_at, updated_at, name, email, password_hash, activated, role, version
+		SELECT id, created_at, updated_at, username, email, password_hash, activated, role, version
 		FROM users
 		WHERE id = ?
 	`
@@ -167,7 +173,7 @@ func (m UserModel) GetByID(id int64) (*User, error) {
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
-		&user.Name,
+		&user.Username,
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
@@ -190,7 +196,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	email = strings.ToLower(email)
 
 	query := `
-		SELECT id, created_at, updated_at, name, email, password_hash, activated, role, version
+		SELECT id, created_at, updated_at, username, email, password_hash, activated, role, version
 		FROM users
 		WHERE email = ?
 	`
@@ -204,7 +210,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
-		&user.Name,
+		&user.Username,
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
@@ -228,12 +234,12 @@ func (m UserModel) Update(user *User) error {
 
 	query := `
 		UPDATE users
-		SET name = ?, email = ?, password_hash = ?, activated = ?, role = ?, version = version + 1
+		SET username = ?, email = ?, password_hash = ?, activated = ?, role = ?, version = version + 1
 		WHERE id = ? AND version = ?
 	`
 
 	args := []any{
-		user.Name,
+		user.Username,
 		user.Email,
 		user.Password.hash,
 		user.Activated,
@@ -249,6 +255,9 @@ func (m UserModel) Update(user *User) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
 			return ErrDuplicateEmail
+		}
+		if strings.Contains(err.Error(), "UNIQUE constraint failed: users.username") {
+			return ErrDuplicateUsername
 		}
 		return err
 	}
@@ -289,7 +298,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
 	query := `
-		SELECT users.id, users.created_at, users.updated_at, users.name, users.email, users.password_hash, users.activated, users.role, users.version
+		SELECT users.id, users.created_at, users.updated_at, users.username, users.email, users.password_hash, users.activated, users.role, users.version
 		FROM users
 		INNER JOIN tokens
 		ON users.id = tokens.user_id
@@ -309,7 +318,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
-		&user.Name,
+		&user.Username,
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,

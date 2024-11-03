@@ -11,7 +11,7 @@ import (
 
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name     string `json:"name"`
+		Username string `json:"username"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
@@ -23,7 +23,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	user := &data.User{
-		Name:      input.Name,
+		Username:  input.Username,
 		Email:     input.Email,
 		Activated: false,
 		Role:      data.UserRole,
@@ -47,6 +47,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		switch {
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", "a user with this email address already exists")
+			app.failedValidationResponse(w, r, v.Errors)
+		case errors.Is(err, data.ErrDuplicateUsername):
+			v.AddError("username", "a user with this username already exists")
 			app.failedValidationResponse(w, r, v.Errors)
 		default:
 			app.serverErrorResponse(w, r, err)
@@ -122,7 +125,7 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	var input struct {
-		Name     *string `json:"name"`
+		Username *string `json:"username"`
 		Email    *string `json:"email"`
 		Password *string `json:"password"`
 	}
@@ -133,8 +136,8 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if input.Name != nil {
-		user.Name = *input.Name
+	if input.Username != nil {
+		user.Username = *input.Username
 	}
 
 	if input.Email != nil {
@@ -160,6 +163,12 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
 			app.editConflictResponse(w, r)
+		case errors.Is(err, data.ErrDuplicateEmail):
+			v.AddError("email", "a user with this email address already exists")
+			app.failedValidationResponse(w, r, v.Errors)
+		case errors.Is(err, data.ErrDuplicateUsername):
+			v.AddError("username", "a user with this username already exists")
+			app.failedValidationResponse(w, r, v.Errors)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
@@ -182,11 +191,13 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 	var input struct {
 		Role string `json:"role"`
 	}
+
 	err = app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
+
 	user, err := app.models.Users.GetByID(id)
 	if err != nil {
 		switch {
@@ -197,12 +208,15 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 		}
 		return
 	}
+
 	v := validator.New()
 	data.ValidateRole(v, input.Role)
+
 	if !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
+
 	if user.Role == data.AdminRole && input.Role == data.UserRole {
 		count, err := app.models.Users.CountAdminUsers()
 		if err != nil {
@@ -214,7 +228,9 @@ func (app *application) updateUserRoleHandler(w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
+
 	user.Role = input.Role
+
 	err = app.models.Users.Update(user)
 	if err != nil {
 		switch {

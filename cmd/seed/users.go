@@ -7,7 +7,7 @@ import (
 )
 
 type user struct {
-	Name      string
+	Username  string
 	Email     string
 	Password  string
 	Activated bool
@@ -16,7 +16,7 @@ type user struct {
 
 func (app *application) seedUsers() {
 	admin := user{
-		Name:      "Admin User",
+		Username:  "admin",
 		Email:     "admin@improved-fiesta.go",
 		Password:  "admin123",
 		Activated: true,
@@ -28,7 +28,7 @@ func (app *application) seedUsers() {
 	app.logger.Info("done seeding admin user")
 
 	activatedUser := user{
-		Name:      "Activated User",
+		Username:  "activated",
 		Email:     "activated@improved-fiesta.go",
 		Password:  "activated123",
 		Activated: true,
@@ -40,7 +40,7 @@ func (app *application) seedUsers() {
 	app.logger.Info("done seeding activated user")
 
 	unactivatedUser := user{
-		Name:      "Unactivated User",
+		Username:  "unactivated",
 		Email:     "unactivated@improved-fiesta.go",
 		Password:  "unactivated123",
 		Activated: false,
@@ -54,7 +54,7 @@ func (app *application) seedUsers() {
 
 func (app *application) seedUser(user *user) {
 	domainUser := &data.User{
-		Name:      user.Name,
+		Username:  user.Username,
 		Email:     user.Email,
 		Activated: user.Activated,
 		Role:      user.Role,
@@ -62,7 +62,7 @@ func (app *application) seedUser(user *user) {
 
 	err := domainUser.Password.Set(user.Password)
 	if err != nil {
-		app.logger.Error(err.Error(), "failed to set password for user", domainUser.Email)
+		app.logger.Error(err.Error(), "failed to set password for user", domainUser.Username)
 		return
 	}
 
@@ -71,8 +71,10 @@ func (app *application) seedUser(user *user) {
 		switch {
 		case errors.Is(err, data.ErrDuplicateEmail):
 			app.logger.Error(err.Error(), "a user with this email address already exists", domainUser.Email)
+		case errors.Is(err, data.ErrDuplicateUsername):
+			app.logger.Error(err.Error(), "a user with this username already exists", domainUser.Username)
 		default:
-			app.logger.Error(err.Error(), "error inserting user", domainUser.Email)
+			app.logger.Error(err.Error(), "error inserting user", domainUser.Username)
 		}
 		return
 	}

@@ -136,7 +136,7 @@ curl http://localhost:45067/v1/healthcheck
 
 **Request Body:**
 
-- `name` (string): User's full name
+- `username` (string): Username
 - `email` (string): User's email address
 - `password` (string): User's password
 
@@ -144,7 +144,7 @@ curl http://localhost:45067/v1/healthcheck
 
 ```bash
 curl -X POST \
-     -d '{"name": "Bob Smith", "email": "bob.smith@example.com", "password": "SecurePass123!"}' \
+     -d '{"username": "bob", "email": "bob.smith@example.com", "password": "SecurePass123!"}' \
      http://localhost:45067/v1/users
 ```
 
@@ -160,7 +160,7 @@ curl -X POST \
     "id": 124,
     "created_at": "2024-01-15T14:00:00Z",
     "updated_at": "2024-01-15T14:00:00Z",
-    "name": "Bob Smith",
+    "username": "bob",
     "email": "bob.smith@example.com",
     "activated": false,
     "role": "user"
@@ -200,7 +200,7 @@ curl -H "Authorization: Bearer $TOKEN" \
     "id": 124,
     "created_at": "2024-01-15T14:00:00Z",
     "updated_at": "2024-01-15T14:00:00Z",
-    "name": "Bob Smith",
+    "username": "bob",
     "email": "bob.smith@example.com",
     "activated": false,
     "role": "user"
@@ -223,7 +223,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **Request Body:** (all fields optional)
 
-- `name` (string): New name
+- `username` (string): New username
 - `email` (string): New email
 - `password` (string): New password
 
@@ -232,7 +232,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
      -X PATCH \
-     -d '{"name": "Robert Smith"}' \
+     -d '{"username": "robert"}' \
      http://localhost:45067/v1/users/124
 ```
 
@@ -248,7 +248,7 @@ curl -H "Authorization: Bearer $TOKEN" \
     "id": 124,
     "created_at": "2024-01-15T14:00:00Z",
     "updated_at": "2024-01-15T15:30:00Z",
-    "name": "Robert Smith",
+    "username": "robert",
     "email": "bob.smith@example.com",
     "activated": false,
     "role": "user"
@@ -317,7 +317,7 @@ curl -H "Authorization: Bearer $TOKEN" \
     "id": 124,
     "created_at": "2024-01-15T14:00:00Z",
     "updated_at": "2024-01-15T16:00:00Z",
-    "name": "Robert Smith",
+    "username": "robert",
     "email": "bob.smith@example.com",
     "activated": false,
     "role": "admin"
@@ -354,7 +354,7 @@ curl -X POST \
     "id": 123,
     "created_at": "2024-01-15T10:30:00Z",
     "updated_at": "2024-01-15T10:30:00Z",
-    "name": "Alice Johnson",
+    "username": "alice",
     "email": "alice.johnson@example.com",
     "activated": true,
     "role": "user"
@@ -392,7 +392,7 @@ curl -X POST \
     "id": 123,
     "created_at": "2024-01-15T10:30:00Z",
     "updated_at": "2024-01-15T11:45:00Z",
-    "name": "Alice Johnson",
+    "username": "alice",
     "email": "alice.johnson@example.com",
     "activated": true,
     "role": "user"

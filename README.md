@@ -513,6 +513,76 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 - Various debugging metrics and application variables
 
+## Database Schema
+
+The application uses SQLite as its database engine with the following schema:
+
+### Users Table
+
+Stores user account information and credentials.
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash BLOB NOT NULL,
+    activated BOOLEAN NOT NULL DEFAULT false,
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    version INTEGER NOT NULL DEFAULT 1
+);
+```
+
+**Columns:**
+
+- `id`: Unique identifier for each user
+- `created_at`: Timestamp of account creation
+- `updated_at`: Timestamp of last account update
+- `username`: Unique username
+- `email`: Unique email address
+- `password_hash`: Hashed user password (stored as BLOB)
+- `activated`: Account activation status
+- `role`: User role (either 'user' or 'admin')
+- `version`: Record version for optimistic locking
+
+An `updated_at` trigger automatically updates the timestamp when the record changes:
+
+```sql
+CREATE TRIGGER set_updated_at
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+    UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;
+```
+
+### Tokens Table
+
+Stores authentication, activation, and password reset tokens.
+
+```sql
+CREATE TABLE IF NOT EXISTS tokens (
+    hash BLOB PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expiry DATETIME NOT NULL,
+    scope TEXT NOT NULL
+);
+```
+
+**Columns:**
+
+- `hash`: Hashed token value (primary key)
+- `user_id`: Associated user ID (foreign key to users table)
+- `expiry`: Token expiration timestamp
+- `scope`: Token purpose/scope (e.g., 'authentication', 'activation', 'password-reset')
+
+**Relationships:**
+
+- `user_id` references the `id` column in the `users` table
+- `ON DELETE CASCADE` ensures tokens are automatically deleted when the associated user is deleted
+
 ## Todo
 
 - [ ] Add GET /v1/users endpoint

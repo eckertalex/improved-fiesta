@@ -21,6 +21,8 @@ curl -s -H "Authorization: Bearer $token" "$API_URL/users/1"
 
 curl -s -H "Authorization: Bearer $token" "$API_URL/users/2"
 
+curl -s -H "Authorization: Bearer $token" "$http://localhost:45067/debug/vars"
+
 curl -s -H "Authorization: Bearer $token" -X DELETE "$API_URL/tokens/session"
 
 curl -s -H "Authorization: Bearer $token" "$API_URL/users/1"

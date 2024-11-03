@@ -65,6 +65,9 @@ run/api: build/api
 		-port=${IMPROVED_FIESTA_PORT} \
 		-env=${IMPROVED_FIESTA_ENV} \
 		-db-dsn=${IMPROVED_FIESTA_DB_DSN} \
+		-limiter-rps=${IMPROVED_FIESTA_LIMITER_RPS} \
+		-limiter-burst=${IMPROVED_FIESTA_LIMITER_BURST} \
+		-limiter-enabled=${IMPROVED_FIESTA_LIMITER_ENABLED} \
 		-smtp-host=${IMPROVED_FIESTA_SMTP_HOST} \
 		-smtp-port=${IMPROVED_FIESTA_SMTP_PORT} \
 		-smtp-username=${IMPROVED_FIESTA_SMTP_USERNAME} \
@@ -80,6 +83,9 @@ watch/api:
 			-port=${IMPROVED_FIESTA_PORT} \
 			-env=${IMPROVED_FIESTA_ENV} \
 			-db-dsn=${IMPROVED_FIESTA_DB_DSN} \
+			-limiter-rps=${IMPROVED_FIESTA_LIMITER_RPS} \
+			-limiter-burst=${IMPROVED_FIESTA_LIMITER_BURST} \
+			-limiter-enabled=${IMPROVED_FIESTA_LIMITER_ENABLED} \
 			-smtp-host=${IMPROVED_FIESTA_SMTP_HOST} \
 			-smtp-port=${IMPROVED_FIESTA_SMTP_PORT} \
 			-smtp-username=${IMPROVED_FIESTA_SMTP_USERNAME} \

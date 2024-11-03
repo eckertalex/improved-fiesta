@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/eckertalex/improved-fiesta/internal/data"
@@ -63,6 +65,27 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+func (app *application) deleteAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request) {
+	authorizationHeader := r.Header.Get("Authorization")
+
+	headerParts := strings.Split(authorizationHeader, " ")
+	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+		app.invalidAuthenticationTokenResponse(w, r)
+		return
+	}
+
+	tokenPlaintext := headerParts[1]
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
+	err := app.models.Tokens.Delete(tokenHash[:], data.ScopeAuthentication)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (app *application) createPasswordResetTokenHandler(w http.ResponseWriter, r *http.Request) {

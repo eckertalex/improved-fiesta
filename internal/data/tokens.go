@@ -81,6 +81,19 @@ func (m TokenModel) Insert(token *Token) error {
 	return err
 }
 
+func (m TokenModel) Delete(hash []byte, scope string) error {
+	query := `
+		DELETE FROM tokens
+		WHERE hash = ? AND scope = ?
+	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, query, hash, scope)
+	return err
+}
+
 func (m TokenModel) DeleteAllForUser(scope string, userID int64) error {
 	query := `
 		DELETE FROM tokens

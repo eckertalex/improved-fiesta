@@ -26,7 +26,7 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/v1/users/reset-password", app.updateUserPasswordHandler)
 
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/session", app.createAuthenticationTokenHandler)
-	// router.HandlerFunc(http.MethodDelete, "/v1/tokens/session", app.deleteAuthenticationTokenHandler)
+	router.HandlerFunc(http.MethodDelete, "/v1/tokens/session", app.requireAuthenticatedUser(app.deleteAuthenticationTokenHandler))
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/activation", app.createActivationTokenHandler)
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/password-reset", app.createPasswordResetTokenHandler)
 

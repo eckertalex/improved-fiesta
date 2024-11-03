@@ -515,7 +515,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ## Todo
 
-- [ ] Add DELETE /v1/tokens/session endpoint
+- [ ] Add a DELETE all authentication token endpoint
 - [ ] Add GET /v1/users endpoint
 - [ ] Figure out how to requireAdmin for /debug/vars endpoint
 - [ ] Write End-to-End tests

@@ -5,9 +5,14 @@ AUTH_URL="$API_URL/tokens/session"
 EMAIL="admin@improved-fiesta.go"
 PASSWORD="admin123"
 
+if ! curl -s --head "$API_URL" > /dev/null; then
+    echo "Error: API is not reachable at $API_URL" >&2
+    exit 1
+fi
+
 token=$(curl -s -X POST -d "{\"email\": \"$EMAIL\", \"password\": \"$PASSWORD\"}" "$AUTH_URL" | jq -r ".authentication_token.token")
 if [ -z "$token" ]; then
-	echo "Failed to obtain authentication token"
+	echo "Error: Failed to obtain authentication token"
 	exit 1
 fi
 

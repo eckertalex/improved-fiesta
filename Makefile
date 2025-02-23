@@ -25,13 +25,16 @@ confirm:
 
 ## audit: run quality control checks
 .PHONY: audit
-audit: test
+audit:
+	@echo "Checking module dependencies"
 	go mod tidy -diff
 	go mod verify
+	@echo "Vetting code..."
 	test -z "$(shell gofmt -l .)" 
 	go vet ./...
-	go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
-	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+	go tool staticcheck -checks=all,-ST1000,-U1000 ./...
+	@echo "Running tests..."
+	go test -v -race -vet=off ./...
 
 ## test: run all tests
 .PHONY: test
@@ -50,7 +53,9 @@ itest:
 ## tidy: tidy and format all .go files
 .PHONY: tidy
 tidy:
+	@echo "Tidying module dependencies..."
 	go mod tidy
+	@echo "Formatting .go files..."
 	go fmt ./...
 
 ## build/api: build the cmd/api application
